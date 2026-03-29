@@ -31,40 +31,40 @@
 
 ### Scope
 
-- [ ] Enrich this plan with detailed execution checklists, tests, and success criteria for Parts 2-10.
-- [ ] Create `frontend/AGENTS.md` documenting existing frontend architecture, behavior, and tests.
-- [ ] Share plan for user approval before implementation work begins.
+- [x] Enrich this plan with detailed execution checklists, tests, and success criteria for Parts 2-10.
+- [x] Create `frontend/AGENTS.md` documenting existing frontend architecture, behavior, and tests.
+- [x] Share plan for user approval before implementation work begins.
 
 ### Tests
 
-- [ ] Manual review confirms all requested decisions are captured.
-- [ ] Manual review confirms each part contains checklist, tests, and success criteria.
+- [x] Manual review confirms all requested decisions are captured.
+- [x] Manual review confirms each part contains checklist, tests, and success criteria.
 
 ### Success Criteria
 
-- [ ] User explicitly approves plan and frontend agent documentation.
+- [x] User explicitly approves plan and frontend agent documentation.
 
 ## Part 2: Scaffolding (Docker + Backend Skeleton)
 
 ### Scope
 
-- [ ] Add multi-service Docker Compose for local development.
-- [ ] Create FastAPI backend skeleton in `backend/`.
-- [ ] Add scripts for start/stop on Mac, Windows, and Linux under `scripts/`.
-- [ ] Serve example static hello-world HTML and example API endpoint.
-- [ ] Keep smoke endpoints in place for now.
+- [x] Add multi-service Docker Compose for local development.
+- [x] Create FastAPI backend skeleton in `backend/`.
+- [x] Add scripts for start/stop on Mac, Windows, and Linux under `scripts/`.
+- [x] Serve example static hello-world HTML and example API endpoint.
+- [x] Keep smoke endpoints in place for now.
 
 ### Tests
 
-- [ ] Backend unit tests for health/smoke API behavior.
-- [ ] Integration test proving compose services boot and API is reachable.
-- [ ] Script-level smoke test: start script boots services and stop script shuts them down cleanly.
+- [x] Backend unit tests for health/smoke API behavior.
+- [x] Integration test proving compose services boot and API is reachable.
+- [x] Script-level smoke test: start script boots services and stop script shuts them down cleanly.
 
 ### Success Criteria
 
-- [ ] `docker compose up` starts all services without manual patching.
-- [ ] Browser returns hello-world page from backend static route.
-- [ ] Example API call returns expected payload.
+- [x] `docker compose up` starts all services without manual patching.
+- [x] Browser returns hello-world page from backend static route.
+- [x] Example API call returns expected payload.
 
 ## Part 3: Serve Frontend Through Backend
 
