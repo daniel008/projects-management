@@ -22,9 +22,9 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
       ref={setNodeRef}
       style={style}
       className={clsx(
-        "rounded-2xl border border-transparent bg-white px-4 py-4 shadow-[0_12px_24px_rgba(3,33,71,0.08)]",
-        "transition-all duration-150",
-        isDragging && "opacity-60 shadow-[0_18px_32px_rgba(3,33,71,0.16)]"
+        "cursor-grab rounded-2xl border border-transparent bg-white px-4 py-4 shadow-[0_12px_24px_rgba(3,33,71,0.08)]",
+        "will-change-transform transition-[transform,box-shadow,opacity] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(3,33,71,0.12)]",
+        isDragging && "cursor-grabbing opacity-80 shadow-[0_22px_38px_rgba(3,33,71,0.18)]"
       )}
       {...attributes}
       {...listeners}

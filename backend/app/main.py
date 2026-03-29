@@ -1,22 +1,44 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-
-app = FastAPI(title="Project Management MVP Backend")
-
-
-@app.get("/healthz")
-def healthz() -> dict[str, str]:
-    return {"status": "ok"}
+from fastapi.staticfiles import StaticFiles
 
 
-@app.get("/api/hello")
-def hello_api() -> dict[str, str]:
-    return {"message": "hello world", "service": "backend"}
+def resolve_frontend_dist() -> Path | None:
+    candidates = [
+        Path(__file__).parent / "static",
+        Path(__file__).resolve().parents[2] / "frontend" / "out",
+    ]
+    for candidate in candidates:
+        if (candidate / "index.html").exists():
+            return candidate
+    return None
 
 
-@app.get("/", response_class=HTMLResponse)
-def root() -> str:
-    return """
+def create_app(static_dir: Path | None = None) -> FastAPI:
+    app = FastAPI(title="Project Management MVP Backend")
+
+    @app.get("/healthz")
+    def healthz() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/api/hello")
+    def hello_api() -> dict[str, str]:
+        return {"message": "hello world", "service": "backend"}
+
+    frontend_dist = static_dir if static_dir is not None else resolve_frontend_dist()
+    if frontend_dist and frontend_dist.exists():
+        app.mount(
+            "/",
+            StaticFiles(directory=str(frontend_dist), html=True),
+            name="frontend-static",
+        )
+        return app
+
+    @app.get("/", response_class=HTMLResponse)
+    def root() -> str:
+        return """
 <!doctype html>
 <html lang="en">
   <head>
@@ -43,3 +65,8 @@ def root() -> str:
   </body>
 </html>
 """
+
+    return app
+
+
+app = create_app()

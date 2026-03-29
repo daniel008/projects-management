@@ -32,3 +32,8 @@ body {
 .font-display {
   font-family: var(--font-display), "Segoe UI", sans-serif;
 }
+
+body.dragging-card,
+body.dragging-card * {
+  cursor: grabbing !important;
+}

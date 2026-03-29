@@ -1,19 +1,9 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: pm-backend
     ports:
       - '8000:8000'
     restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: pm-frontend
-    ports:
-      - '3000:3000'
-    restart: unless-stopped
-    depends_on:
-      - backend

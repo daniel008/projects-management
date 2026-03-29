@@ -70,20 +70,20 @@
 
 ### Scope
 
-- [ ] Build existing Next.js frontend as static output.
-- [ ] Configure backend to serve built frontend at `/`.
-- [ ] Preserve current Kanban demo functionality in served build.
+- [x] Build existing Next.js frontend as static output.
+- [x] Configure backend to serve built frontend at `/`.
+- [x] Preserve current Kanban demo functionality in served build.
 
 ### Tests
 
-- [ ] Frontend unit tests pass with 80%+ coverage.
-- [ ] Integration test verifies backend serves frontend files and app shell.
-- [ ] E2E test verifies `/` renders Kanban board with expected columns.
+- [x] Frontend unit tests pass with 80%+ coverage.
+- [x] Integration test verifies backend serves frontend files and app shell.
+- [x] E2E test verifies `/` renders Kanban board with expected columns.
 
 ### Success Criteria
 
-- [ ] Visiting `/` from running stack shows current Kanban UI.
-- [ ] No runtime dependency on standalone `next dev` in integrated mode.
+- [x] Visiting `/` from running stack shows current Kanban UI.
+- [x] No runtime dependency on standalone `next dev` in integrated mode.
 
 ## Part 4: Fake User Sign-In (Frontend Session State)
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -8,6 +8,7 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  type DragCancelEvent,
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
@@ -29,6 +30,10 @@ export const KanbanBoard = () => {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
+  };
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    setActiveCardId(null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -91,6 +96,19 @@ export const KanbanBoard = () => {
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
 
+  useEffect(() => {
+    if (!activeCardId) {
+      document.body.classList.remove("dragging-card");
+      return;
+    }
+
+    document.body.classList.add("dragging-card");
+
+    return () => {
+      document.body.classList.remove("dragging-card");
+    };
+  }, [activeCardId]);
+
   return (
     <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
@@ -137,6 +155,7 @@ export const KanbanBoard = () => {
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
+          onDragCancel={handleDragCancel}
           onDragEnd={handleDragEnd}
         >
           <section className="grid gap-6 lg:grid-cols-5">
