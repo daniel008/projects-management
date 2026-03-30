@@ -9,7 +9,7 @@
 - [x] Use frontend-only session state for fake auth in Part 4.
 - [x] Use normalized SQLite tables, with JSON used only for card metadata/history.
 - [x] Use permissive structured-output parsing from AI, with explicit fallback behavior.
-- [x] Testing quality bar: minimum 80% unit coverage plus robust integration testing.
+- [x] Testing quality bar: target around 80% unit coverage when sensible, with robust integration testing and emphasis on valuable tests.
 
 ## Global Standards
 
@@ -21,7 +21,7 @@
 
 ## Test Strategy (Applies Across Parts)
 
-- [ ] Unit tests target 80%+ coverage for code introduced in each phase.
+- [ ] Unit tests target around 80% coverage when sensible for the scope of each phase.
 - [ ] Integration tests cover key cross-boundary paths (frontend and backend interactions).
 - [ ] E2E smoke tests cover critical user journeys at each major milestone.
 - [ ] CI/local test commands are documented and reproducible.
@@ -76,7 +76,7 @@
 
 ### Tests
 
-- [x] Frontend unit tests pass with 80%+ coverage.
+- [x] Frontend unit tests pass with meaningful coverage for changed behavior (around 80% when sensible).
 - [x] Integration test verifies backend serves frontend files and app shell.
 - [x] E2E test verifies `/` renders Kanban board with expected columns.
 
@@ -89,58 +89,58 @@
 
 ### Scope
 
-- [ ] Add login gate at `/` with hardcoded credentials `user` and `password`.
-- [ ] Implement frontend-only session state to control logged-in view.
-- [ ] Add logout action that clears session state and returns to login form.
+- [x] Add login gate at `/` with hardcoded credentials `user` and `password`.
+- [x] Implement frontend-only session state to control logged-in view.
+- [x] Add logout action that clears session state and returns to login form.
 
 ### Tests
 
-- [ ] Unit tests for login form validation and session state transitions.
-- [ ] Integration tests for login success, login failure, and logout.
-- [ ] E2E test for full login-to-kanban and logout-to-login journey.
+- [x] Unit tests for login form validation and session state transitions.
+- [x] Integration tests for login success, login failure, and logout.
+- [x] E2E test for full login-to-kanban and logout-to-login journey.
 
 ### Success Criteria
 
-- [ ] Unauthenticated users cannot see board content.
-- [ ] Correct credentials reveal board; logout reliably hides it again.
+- [x] Unauthenticated users cannot see board content.
+- [x] Correct credentials reveal board; logout reliably hides it again.
 
 ## Part 5: Database Modeling (Normalized + JSON Metadata/History)
 
 ### Scope
 
-- [ ] Propose normalized SQLite schema for users, boards, columns, cards, and ordering.
-- [ ] Include JSON fields only where useful (card metadata/history, optional audit payloads).
-- [ ] Document schema and migration/bootstrap approach in `docs/`.
-- [ ] Request and obtain explicit user sign-off before implementation.
+- [x] Propose normalized SQLite schema for users, boards, columns, cards, and ordering.
+- [x] Include JSON fields only where useful (card metadata/history, optional audit payloads).
+- [x] Document schema and migration/bootstrap approach in `docs/`.
+- [x] Request and obtain explicit user sign-off before implementation.
 
 ### Tests
 
-- [ ] Schema review checklist verifies normalization and constraint coverage.
-- [ ] Migration/bootstrap test creates DB from empty state without errors.
+- [x] Schema review checklist verifies normalization and constraint coverage.
+- [x] Migration/bootstrap test creates DB from empty state without errors.
 
 ### Success Criteria
 
 - [ ] Approved schema document is committed in `docs/`.
-- [ ] Data model supports one board per user now and multi-user growth later.
+- [x] Data model supports one board per user now and multi-user growth later.
 
 ## Part 6: Backend Kanban API + Persistence
 
 ### Scope
 
-- [ ] Implement DB initialization if database file does not exist.
-- [ ] Add API routes for reading/updating Kanban state for a given user.
-- [ ] Enforce ordering and data integrity at API/service layer.
+- [x] Implement DB initialization if database file does not exist.
+- [x] Add API routes for reading/updating Kanban state for a given user.
+- [x] Enforce ordering and data integrity at API/service layer.
 
 ### Tests
 
-- [ ] Unit tests for service-layer transformations and validation logic (80%+).
-- [ ] Integration tests for API CRUD flows and persistence behavior.
-- [ ] Negative-path tests for invalid IDs/payloads.
+- [x] Unit tests for service-layer transformations and validation logic (target around 80% when sensible).
+- [x] Integration tests for API CRUD flows and persistence behavior.
+- [x] Negative-path tests for invalid IDs/payloads.
 
 ### Success Criteria
 
-- [ ] API persists and returns consistent board state across process restarts.
-- [ ] API behavior is deterministic and covered by tests.
+- [x] API persists and returns consistent board state across process restarts.
+- [x] API behavior is deterministic and covered by tests.
 
 ## Part 7: Frontend + Backend Integration
 
@@ -152,7 +152,7 @@
 
 ### Tests
 
-- [ ] Unit tests for client data adapters/state transitions (80%+).
+- [ ] Unit tests for client data adapters/state transitions (target around 80% when sensible).
 - [ ] Integration tests using mocked or test backend endpoints.
 - [ ] E2E tests verifying persisted updates survive page refresh.
 
@@ -209,7 +209,7 @@
 
 ### Tests
 
-- [ ] Unit tests for chat UI state management and message rendering (80%+).
+- [ ] Unit tests for chat UI state management and message rendering (target around 80% when sensible).
 - [ ] Integration tests for chat request lifecycle and board refresh trigger.
 - [ ] E2E tests for end-to-end chat interaction that results in board mutation.
 

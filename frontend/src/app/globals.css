@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --accent-yellow: #ecad0a;
@@ -25,12 +25,12 @@
 body {
   background: var(--surface);
   color: var(--navy-dark);
-  font-family: var(--font-body), "Segoe UI", sans-serif;
+  font-family: var(--font-body), 'Segoe UI', sans-serif;
   margin: 0;
 }
 
 .font-display {
-  font-family: var(--font-display), "Segoe UI", sans-serif;
+  font-family: var(--font-display), 'Segoe UI', sans-serif;
 }
 
 body.dragging-card,

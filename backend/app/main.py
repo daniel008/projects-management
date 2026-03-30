@@ -1,8 +1,15 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+
+from app.board_service import BoardService
+from app.schemas import BoardPayload
+
+
+def resolve_db_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "data" / "pm.db"
 
 
 def resolve_frontend_dist() -> Path | None:
@@ -16,8 +23,10 @@ def resolve_frontend_dist() -> Path | None:
     return None
 
 
-def create_app(static_dir: Path | None = None) -> FastAPI:
+def create_app(static_dir: Path | None = None, db_path: Path | None = None) -> FastAPI:
     app = FastAPI(title="Project Management MVP Backend")
+    service = BoardService(db_path or resolve_db_path())
+    service.initialize()
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
@@ -26,6 +35,17 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
     @app.get("/api/hello")
     def hello_api() -> dict[str, str]:
         return {"message": "hello world", "service": "backend"}
+
+    @app.get("/api/board/{username}")
+    def get_board(username: str) -> dict:
+        return service.get_board(username)
+
+    @app.put("/api/board/{username}")
+    def put_board(username: str, board: BoardPayload) -> dict:
+        try:
+            return service.save_board(username, board)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     frontend_dist = static_dir if static_dir is not None else resolve_frontend_dist()
     if frontend_dist and frontend_dist.exists():
@@ -42,26 +62,26 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PM MVP Backend Smoke Test</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 2rem;
-        line-height: 1.5;
-      }
-      code {
-        background: #f3f3f3;
-        padding: 0.15rem 0.35rem;
-        border-radius: 0.25rem;
-      }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PM MVP Backend Smoke Test</title>
+  <style>
+    body {
+    font-family: Arial, sans-serif;
+    margin: 2rem;
+    line-height: 1.5;
+    }
+    code {
+    background: #f3f3f3;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    }
+  </style>
   </head>
   <body>
-    <h1>Hello from FastAPI</h1>
-    <p>This is the Part 2 scaffold static page served at <code>/</code>.</p>
-    <p>Smoke API endpoint: <code>/api/hello</code></p>
+  <h1>Hello from FastAPI</h1>
+  <p>This is the Part 2 scaffold static page served at <code>/</code>.</p>
+  <p>Smoke API endpoint: <code>/api/hello</code></p>
   </body>
 </html>
 """

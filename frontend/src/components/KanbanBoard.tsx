@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -11,10 +11,10 @@ import {
   type DragCancelEvent,
   type DragEndEvent,
   type DragStartEvent,
-} from "@dnd-kit/core";
-import { KanbanColumn } from "@/components/KanbanColumn";
-import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+} from '@dnd-kit/core';
+import { KanbanColumn } from '@/components/KanbanColumn';
+import { KanbanCardPreview } from '@/components/KanbanCardPreview';
+import { createId, initialData, moveCard, type BoardData } from '@/lib/kanban';
 
 export const KanbanBoard = () => {
   const [board, setBoard] = useState<BoardData>(() => initialData);
@@ -23,7 +23,7 @@ export const KanbanBoard = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
-    })
+    }),
   );
 
   const cardsById = useMemo(() => board.cards, [board.cards]);
@@ -54,23 +54,23 @@ export const KanbanBoard = () => {
     setBoard((prev) => ({
       ...prev,
       columns: prev.columns.map((column) =>
-        column.id === columnId ? { ...column, title } : column
+        column.id === columnId ? { ...column, title } : column,
       ),
     }));
   };
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
-    const id = createId("card");
+    const id = createId('card');
     setBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
-        [id]: { id, title, details: details || "No details yet." },
+        [id]: { id, title, details: details || 'No details yet.' },
       },
       columns: prev.columns.map((column) =>
         column.id === columnId
           ? { ...column, cardIds: [...column.cardIds, id] }
-          : column
+          : column,
       ),
     }));
   };
@@ -80,7 +80,7 @@ export const KanbanBoard = () => {
       return {
         ...prev,
         cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
+          Object.entries(prev.cards).filter(([id]) => id !== cardId),
         ),
         columns: prev.columns.map((column) =>
           column.id === columnId
@@ -88,7 +88,7 @@ export const KanbanBoard = () => {
                 ...column,
                 cardIds: column.cardIds.filter((id) => id !== cardId),
               }
-            : column
+            : column,
         ),
       };
     });
@@ -98,14 +98,14 @@ export const KanbanBoard = () => {
 
   useEffect(() => {
     if (!activeCardId) {
-      document.body.classList.remove("dragging-card");
+      document.body.classList.remove('dragging-card');
       return;
     }
 
-    document.body.classList.add("dragging-card");
+    document.body.classList.add('dragging-card');
 
     return () => {
-      document.body.classList.remove("dragging-card");
+      document.body.classList.remove('dragging-card');
     };
   }, [activeCardId]);
 
@@ -125,8 +125,9 @@ export const KanbanBoard = () => {
                 Kanban Studio
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--gray-text)]">
-                Keep momentum visible. Rename columns, drag cards between stages,
-                and capture quick notes without getting buried in settings.
+                Keep momentum visible. Rename columns, drag cards between
+                stages, and capture quick notes without getting buried in
+                settings.
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">

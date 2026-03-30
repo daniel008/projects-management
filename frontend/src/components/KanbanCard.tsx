@@ -1,7 +1,7 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import clsx from "clsx";
-import type { Card } from "@/lib/kanban";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import clsx from 'clsx';
+import type { Card } from '@/lib/kanban';
 
 type KanbanCardProps = {
   card: Card;
@@ -9,8 +9,14 @@ type KanbanCardProps = {
 };
 
 export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: card.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -22,9 +28,10 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
       ref={setNodeRef}
       style={style}
       className={clsx(
-        "cursor-grab rounded-2xl border border-transparent bg-white px-4 py-4 shadow-[0_12px_24px_rgba(3,33,71,0.08)]",
-        "will-change-transform transition-[transform,box-shadow,opacity] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(3,33,71,0.12)]",
-        isDragging && "cursor-grabbing opacity-80 shadow-[0_22px_38px_rgba(3,33,71,0.18)]"
+        'cursor-grab rounded-2xl border border-transparent bg-white px-4 py-4 shadow-[0_12px_24px_rgba(3,33,71,0.08)]',
+        'will-change-transform transition-[transform,box-shadow,opacity] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(3,33,71,0.12)]',
+        isDragging &&
+          'cursor-grabbing opacity-80 shadow-[0_22px_38px_rgba(3,33,71,0.18)]',
       )}
       {...attributes}
       {...listeners}
