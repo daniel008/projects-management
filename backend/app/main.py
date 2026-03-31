@@ -4,8 +4,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.ai_client import AIConfig, OpenRouterClient
+from app.ai_service import AIService
 from app.board_service import BoardService
-from app.schemas import BoardPayload
+from app.schemas import AIChatRequest, AIChatResponse, AIConnectivityResponse, BoardPayload
 
 
 def resolve_db_path() -> Path:
@@ -23,10 +25,16 @@ def resolve_frontend_dist() -> Path | None:
     return None
 
 
-def create_app(static_dir: Path | None = None, db_path: Path | None = None) -> FastAPI:
+def create_app(
+    static_dir: Path | None = None,
+    db_path: Path | None = None,
+    ai_service: AIService | None = None,
+) -> FastAPI:
     app = FastAPI(title="Project Management MVP Backend")
     service = BoardService(db_path or resolve_db_path())
     service.initialize()
+    resolved_ai_service = ai_service or AIService(
+        OpenRouterClient(AIConfig.from_env()))
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
@@ -46,6 +54,14 @@ def create_app(static_dir: Path | None = None, db_path: Path | None = None) -> F
             return service.save_board(username, board)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/api/ai/connectivity", response_model=AIConnectivityResponse)
+    def ai_connectivity() -> AIConnectivityResponse:
+        return resolved_ai_service.check_connectivity()
+
+    @app.post("/api/ai/chat/{username}", response_model=AIChatResponse)
+    def ai_chat(username: str, request: AIChatRequest) -> AIChatResponse:
+        return resolved_ai_service.handle_chat(username, request, service)
 
     frontend_dist = static_dir if static_dir is not None else resolve_frontend_dist()
     if frontend_dist and frontend_dist.exists():

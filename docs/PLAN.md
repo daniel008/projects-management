@@ -167,39 +167,47 @@
 
 ### Scope
 
-- [ ] Add backend AI client using OpenRouter and `.env` key.
-- [ ] Configure model `openai/gpt-oss-120b`.
-- [ ] Implement initial connectivity path (simple "2+2" style verification route or service test).
+- [x] Add backend AI client using OpenRouter and `.env` key.
+- [x] Configure model `openai/gpt-oss-120b`.
+- [x] Implement initial connectivity path (simple "2+2" style verification route or service test).
+- [x] Expose dedicated connectivity route at `/api/ai/connectivity`.
+- [x] Return normalized AI response envelope intended for reuse in Parts 9-10.
+- [x] Add timeout and retry/backoff behavior for OpenRouter connectivity requests.
+- [x] Make model/runtime tuning configurable via env vars, with conservative defaults.
+- [x] Add a small backend AI service abstraction to keep Part 9 implementation clean.
+- [x] Add simple observability metadata logging (status/provider/model/latency) without secrets.
+- [x] Add short ops/troubleshooting note for AI connectivity defaults and common outcomes.
 
 ### Tests
 
-- [ ] Unit tests for AI client configuration and request composition (mocked).
-- [ ] Integration test with mocked OpenRouter response path.
-- [ ] Optional manual live connectivity check gated on key availability.
+- [x] Unit tests for AI client configuration and request composition (mocked).
+- [x] Integration test with mocked OpenRouter response path.
+- [x] CI/backend tests use mocked OpenRouter behavior by default (no live provider dependency).
+- [x] Optional manual live connectivity check gated on key availability.
 
 ### Success Criteria
 
-- [ ] Backend can successfully execute and parse a basic AI request/response cycle.
+- [x] Backend can successfully execute and parse a basic AI request/response cycle.
 
 ## Part 9: Structured Outputs for Chat + Board Updates
 
 ### Scope
 
-- [ ] Send full board JSON, user question, and conversation history to AI endpoint.
-- [ ] Define structured response contract with fields for user message and optional board patch/update.
-- [ ] Implement permissive parsing with fallback behavior when response is malformed/partial.
-- [ ] Apply validated board updates server-side before returning response.
+- [x] Send full board JSON, user question, and conversation history to AI endpoint.
+- [x] Define structured response contract with fields for user message and optional board patch/update.
+- [x] Implement permissive parsing with fallback behavior when response is malformed/partial.
+- [x] Apply validated board updates server-side before returning response.
 
 ### Tests
 
-- [ ] Unit tests for prompt payload shaping and parser behavior (valid/partial/invalid cases).
-- [ ] Integration tests for backend endpoint applying AI-suggested board updates.
-- [ ] Regression tests for fallback path when model output does not match expected schema.
+- [x] Unit tests for prompt payload shaping and parser behavior (valid/partial/invalid cases).
+- [x] Integration tests for backend endpoint applying AI-suggested board updates.
+- [x] Regression tests for fallback path when model output does not match expected schema.
 
 ### Success Criteria
 
-- [ ] User always receives a chat response even on schema mismatch.
-- [ ] Valid AI board updates are safely applied and persisted.
+- [x] User always receives a chat response even on schema mismatch.
+- [x] Valid AI board updates are safely applied and persisted.
 
 ## Part 10: Frontend AI Sidebar + Live Board Refresh
 
