@@ -1,20 +1,43 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KanbanApp } from '@/components/KanbanApp';
+import { initialData } from '@/lib/kanban';
+
+const createJsonResponse = (payload: unknown) =>
+  ({
+    ok: true,
+    status: 200,
+    json: async () => payload,
+    text: async () => JSON.stringify(payload),
+  }) as Response;
 
 describe('KanbanApp', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    vi.restoreAllMocks();
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      createJsonResponse(initialData),
+    );
   });
 
-  it('shows login gate when unauthenticated', () => {
+  it('shows login gate when unauthenticated', async () => {
     render(<KanbanApp />);
     expect(
-      screen.getByRole('button', { name: /sign in/i }),
+      await screen.findByRole('button', { name: /sign in/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /log out/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('does not flash login page for already-authenticated session', async () => {
+    sessionStorage.setItem('pm-authenticated', 'true');
+    sessionStorage.setItem('pm-username', 'user');
+
+    render(<KanbanApp />);
+
+    expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /log out/i })).toBeInTheDocument();
   });
 
   it('shows validation message for invalid credentials', async () => {

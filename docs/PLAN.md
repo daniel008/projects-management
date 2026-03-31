@@ -146,20 +146,20 @@
 
 ### Scope
 
-- [ ] Replace in-memory frontend board state with backend API integration.
-- [ ] Keep drag/drop, rename, add, delete behavior while persisting updates.
-- [ ] Add loading/error states for network operations.
+- [x] Replace in-memory frontend board state with backend API integration.
+- [x] Keep drag/drop, rename, add, delete behavior while persisting updates.
+- [x] Add loading/error states for network operations.
 
 ### Tests
 
-- [ ] Unit tests for client data adapters/state transitions (target around 80% when sensible).
-- [ ] Integration tests using mocked or test backend endpoints.
-- [ ] E2E tests verifying persisted updates survive page refresh.
+- [x] Unit tests for client data adapters/state transitions (target around 80% when sensible).
+- [x] Integration tests using mocked or test backend endpoints.
+- [x] E2E tests verifying persisted updates survive page refresh.
 
 ### Success Criteria
 
-- [ ] All core Kanban actions persist through backend and reload correctly.
-- [ ] App remains responsive with clear error handling when API fails.
+- [x] All core Kanban actions persist through backend and reload correctly.
+- [x] App remains responsive with clear error handling when API fails.
 
 ## Part 8: AI Connectivity via OpenRouter
 

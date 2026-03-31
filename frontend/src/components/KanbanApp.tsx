@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { KanbanBoard } from '@/components/KanbanBoard';
 
 const SESSION_KEY = 'pm-authenticated';
+const SESSION_USER_KEY = 'pm-username';
 const DEMO_USERNAME = 'user';
 const DEMO_PASSWORD = 'password';
 
@@ -11,17 +12,38 @@ export const KanbanApp = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isBootstrappingAuth, setIsBootstrappingAuth] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    setAuthenticated(sessionStorage.getItem(SESSION_KEY) === 'true');
+    const isAuthenticated = sessionStorage.getItem(SESSION_KEY) === 'true';
+    setAuthenticated(isAuthenticated);
+    if (isAuthenticated) {
+      setUsername(sessionStorage.getItem(SESSION_USER_KEY) || DEMO_USERNAME);
+    }
+    setIsBootstrappingAuth(false);
   }, []);
+
+  if (isBootstrappingAuth) {
+    return (
+      <main className="relative mx-auto flex min-h-screen w-full max-w-[560px] items-center justify-center px-6 py-12">
+        <div className="inline-flex items-center gap-3 rounded-full border border-[var(--stroke)] bg-white px-5 py-3 text-sm font-semibold text-[var(--navy-dark)] shadow-[var(--shadow)]">
+          <span
+            className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--stroke)] border-t-[var(--primary-blue)]"
+            aria-label="Restoring session"
+          />
+          Restoring session...
+        </div>
+      </main>
+    );
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (username === DEMO_USERNAME && password === DEMO_PASSWORD) {
       sessionStorage.setItem(SESSION_KEY, 'true');
+      sessionStorage.setItem(SESSION_USER_KEY, username);
       setAuthenticated(true);
       setError(null);
       setPassword('');
@@ -33,6 +55,7 @@ export const KanbanApp = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);
     setAuthenticated(false);
     setUsername('');
     setPassword('');
@@ -124,7 +147,7 @@ export const KanbanApp = () => {
           Log Out
         </button>
       </div>
-      <KanbanBoard />
+      <KanbanBoard username={username || DEMO_USERNAME} />
     </div>
   );
 };

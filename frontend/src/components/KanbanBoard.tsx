@@ -14,11 +14,19 @@ import {
 } from '@dnd-kit/core';
 import { KanbanColumn } from '@/components/KanbanColumn';
 import { KanbanCardPreview } from '@/components/KanbanCardPreview';
+import { fetchBoard, saveBoard } from '@/lib/boardApi';
 import { createId, initialData, moveCard, type BoardData } from '@/lib/kanban';
 
-export const KanbanBoard = () => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+type KanbanBoardProps = {
+  username: string;
+};
+
+export const KanbanBoard = ({ username }: KanbanBoardProps) => {
+  const [board, setBoard] = useState<BoardData | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -26,7 +34,59 @@ export const KanbanBoard = () => {
     }),
   );
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  const cardsById = useMemo(() => board?.cards ?? {}, [board]);
+
+  const ensureMinLoadingDelay = async (startedAt: number) => {
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, 250 - elapsed);
+    if (remaining > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+    }
+  };
+
+  const loadBoard = async () => {
+    const startedAt = Date.now();
+    setIsLoading(true);
+    try {
+      const remoteBoard = await fetchBoard(username);
+      setBoard(remoteBoard);
+      setSyncError(null);
+    } catch {
+      setSyncError(
+        'Unable to load board from backend. Using local board state.',
+      );
+      setBoard((prev) => prev ?? initialData);
+    } finally {
+      await ensureMinLoadingDelay(startedAt);
+      setIsLoading(false);
+    }
+  };
+
+  const persistBoard = async (nextBoard: BoardData) => {
+    setIsSaving(true);
+    try {
+      const savedBoard = await saveBoard(username, nextBoard);
+      setBoard(savedBoard);
+      setSyncError(null);
+    } catch {
+      setSyncError(
+        'Unable to save board changes. Changes are local only right now.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateBoard = (updater: (prev: BoardData) => BoardData) => {
+    setBoard((prev) => {
+      if (!prev) {
+        return prev;
+      }
+      const next = updater(prev);
+      void persistBoard(next);
+      return next;
+    });
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
@@ -44,14 +104,14 @@ export const KanbanBoard = () => {
       return;
     }
 
-    setBoard((prev) => ({
+    updateBoard((prev) => ({
       ...prev,
       columns: moveCard(prev.columns, active.id as string, over.id as string),
     }));
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
+    updateBoard((prev) => ({
       ...prev,
       columns: prev.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column,
@@ -61,7 +121,7 @@ export const KanbanBoard = () => {
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
     const id = createId('card');
-    setBoard((prev) => ({
+    updateBoard((prev) => ({
       ...prev,
       cards: {
         ...prev.cards,
@@ -76,7 +136,7 @@ export const KanbanBoard = () => {
   };
 
   const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
+    updateBoard((prev) => {
       return {
         ...prev,
         cards: Object.fromEntries(
@@ -108,6 +168,30 @@ export const KanbanBoard = () => {
       document.body.classList.remove('dragging-card');
     };
   }, [activeCardId]);
+
+  useEffect(() => {
+    void loadBoard();
+  }, [username]);
+
+  if (!board && isLoading) {
+    return (
+      <div className="relative overflow-hidden">
+        <main className="relative mx-auto flex min-h-screen max-w-[1500px] items-center justify-center px-6 pb-16 pt-12">
+          <div className="inline-flex items-center gap-3 rounded-full border border-[var(--stroke)] bg-white px-5 py-3 text-sm font-semibold text-[var(--navy-dark)] shadow-[var(--shadow)]">
+            <span
+              className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--stroke)] border-t-[var(--primary-blue)]"
+              aria-label="Loading board"
+            />
+            Loading board...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!board) {
+    return null;
+  }
 
   return (
     <div className="relative overflow-hidden">
@@ -149,6 +233,38 @@ export const KanbanBoard = () => {
                 {column.title}
               </div>
             ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--gray-text)]">
+            <span className="inline-flex items-center gap-2">
+              {(isLoading || isSaving) ? (
+                <span
+                  className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--stroke)] border-t-[var(--primary-blue)]"
+                  aria-label="Sync in progress"
+                />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+              )}
+              {isLoading ? 'Loading board' : isSaving ? 'Saving changes' : 'Synced'}
+            </span>
+            {syncError ? (
+              <>
+                <span
+                  role="alert"
+                  className="rounded-xl border border-rose-400/60 bg-rose-50 px-3 py-2 text-[var(--navy-dark)] normal-case tracking-normal"
+                >
+                  {syncError}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void loadBoard();
+                  }}
+                  className="rounded-full border border-[var(--stroke)] px-3 py-1 text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]"
+                >
+                  Retry Sync
+                </button>
+              </>
+            ) : null}
           </div>
         </header>
 
