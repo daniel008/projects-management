@@ -236,15 +236,22 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--gray-text)]">
             <span className="inline-flex items-center gap-2">
-              {(isLoading || isSaving) ? (
+              {isLoading || isSaving ? (
                 <span
                   className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--stroke)] border-t-[var(--primary-blue)]"
                   aria-label="Sync in progress"
                 />
               ) : (
-                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                <span
+                  className="h-2 w-2 rounded-full bg-emerald-500"
+                  aria-hidden="true"
+                />
               )}
-              {isLoading ? 'Loading board' : isSaving ? 'Saving changes' : 'Synced'}
+              {isLoading
+                ? 'Loading board'
+                : isSaving
+                  ? 'Saving changes'
+                  : 'Synced'}
             </span>
             {syncError ? (
               <>

@@ -36,8 +36,12 @@ describe('KanbanApp', () => {
 
     render(<KanbanApp />);
 
-    expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /log out/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /sign in/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /log out/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows validation message for invalid credentials', async () => {

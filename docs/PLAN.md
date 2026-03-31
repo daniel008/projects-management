@@ -10,6 +10,8 @@
 - [x] Use normalized SQLite tables, with JSON used only for card metadata/history.
 - [x] Use permissive structured-output parsing from AI, with explicit fallback behavior.
 - [x] Testing quality bar: target around 80% unit coverage when sensible, with robust integration testing and emphasis on valuable tests.
+- [x] For frontend/backend board sync, use optimistic local UI updates with backend persistence and explicit sync status/error feedback.
+- [x] For session restore and initial board load, show spinner-first UX to avoid login or board-content flash on slow networks.
 
 ## Global Standards
 
@@ -120,7 +122,7 @@
 
 ### Success Criteria
 
-- [ ] Approved schema document is committed in `docs/`.
+- [x] Approved schema document is committed in `docs/`.
 - [x] Data model supports one board per user now and multi-user growth later.
 
 ## Part 6: Backend Kanban API + Persistence
