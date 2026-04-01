@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 
 from app.board_service import BoardService
@@ -24,6 +25,7 @@ CHAT_SYSTEM_PROMPT = (
 FALLBACK_MESSAGE = (
     "I could not apply a structured board update, but I can still help with planning next steps."
 )
+MIN_CHAT_MAX_TOKENS = 1200
 
 
 class AIService:
@@ -106,7 +108,10 @@ class AIService:
 
         try:
             messages = self._build_chat_messages(current_board, request)
-            raw_text = self.client.request_messages(messages)
+            raw_text = self.client.request_messages(
+                messages,
+                max_tokens=max(self.client.config.max_tokens, MIN_CHAT_MAX_TOKENS),
+            )
             assistant_message, board_candidate = self._parse_structured_response(
                 raw_text)
 
@@ -179,7 +184,8 @@ class AIService:
     def _parse_structured_response(self, raw_text: str) -> tuple[str | None, dict | None]:
         data = self._try_parse_json(raw_text)
         if data is None:
-            return raw_text.strip(), None
+            recovered_message = self._extract_message_from_raw(raw_text)
+            return recovered_message or raw_text.strip(), None
 
         assistant_message = self._extract_message(data)
         board_candidate = self._extract_board_candidate(data)
@@ -190,19 +196,83 @@ class AIService:
         if not stripped:
             return None
 
-        candidates = [stripped]
-        start = stripped.find("{")
-        end = stripped.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            candidates.append(stripped[start:end + 1])
+        candidates = [
+            stripped,
+            self._strip_markdown_fence(stripped),
+        ]
 
+        extracted = self._extract_first_balanced_json_object(stripped)
+        if extracted:
+            candidates.append(extracted)
+
+        fenced_extracted = self._extract_first_balanced_json_object(
+            self._strip_markdown_fence(stripped)
+        )
+        if fenced_extracted:
+            candidates.append(fenced_extracted)
+
+        unique_candidates: list[str] = []
         for candidate in candidates:
+            normalized = candidate.strip()
+            if normalized and normalized not in unique_candidates:
+                unique_candidates.append(normalized)
+
+        for candidate in unique_candidates:
             try:
                 parsed = json.loads(candidate)
             except json.JSONDecodeError:
                 continue
             if isinstance(parsed, dict):
                 return parsed
+        return None
+
+    def _strip_markdown_fence(self, text: str) -> str:
+        if not text.startswith("```"):
+            return text
+
+        lines = text.splitlines()
+        if len(lines) < 3:
+            return text
+
+        if lines[-1].strip() != "```":
+            return text
+
+        return "\n".join(lines[1:-1]).strip()
+
+    def _extract_first_balanced_json_object(self, text: str) -> str | None:
+        start = text.find("{")
+        if start == -1:
+            return None
+
+        depth = 0
+        in_string = False
+        escaped = False
+
+        for index in range(start, len(text)):
+            char = text[index]
+
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+
+            if char == '"':
+                in_string = True
+                continue
+
+            if char == "{":
+                depth += 1
+                continue
+
+            if char == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start : index + 1]
+
         return None
 
     def _extract_message(self, data: dict) -> str | None:
@@ -219,6 +289,72 @@ class AIService:
             value = data.get(key)
             if isinstance(value, dict):
                 return value
+        return None
+
+    def _extract_message_from_raw(self, raw_text: str) -> str | None:
+        for field_name in ["userMessage", "assistantMessage", "message"]:
+            candidate = self._extract_json_string_field(raw_text, field_name)
+            if candidate:
+                return candidate
+
+        patterns = [
+            r'"userMessage"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"',
+            r'"assistantMessage"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"',
+            r'"message"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"',
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, raw_text)
+            if not match:
+                continue
+
+            try:
+                candidate = bytes(match.group(1), "utf-8").decode(
+                    "unicode_escape"
+                ).strip()
+            except UnicodeDecodeError:
+                continue
+
+            if candidate:
+                return candidate
+
+        return None
+
+    def _extract_json_string_field(self, raw_text: str, field_name: str) -> str | None:
+        key = f'"{field_name}"'
+        key_index = raw_text.find(key)
+        if key_index == -1:
+            return None
+
+        colon_index = raw_text.find(":", key_index + len(key))
+        if colon_index == -1:
+            return None
+
+        start_index = colon_index + 1
+        while start_index < len(raw_text) and raw_text[start_index].isspace():
+            start_index += 1
+
+        if start_index >= len(raw_text) or raw_text[start_index] != '"':
+            return None
+
+        chars: list[str] = []
+        escaped = False
+        for index in range(start_index + 1, len(raw_text)):
+            char = raw_text[index]
+            if escaped:
+                chars.append(char)
+                escaped = False
+                continue
+            if char == "\\":
+                escaped = True
+                continue
+            if char == '"':
+                return "".join(chars).strip()
+            chars.append(char)
+
+        if chars:
+            return "".join(chars).strip()
+
         return None
 
     def _log_chat_result(self, result: AIChatResponse, start: float) -> None:

@@ -17,6 +17,35 @@ type BoardApiPayload = {
   cards: Record<string, BoardApiCard>;
 };
 
+export type ChatRole = 'user' | 'assistant';
+
+export type ChatMessage = {
+  role: ChatRole;
+  content: string;
+};
+
+type AIChatApiPayload = {
+  success: boolean;
+  status: string;
+  provider: string;
+  model: string;
+  assistantMessage: string;
+  boardUpdated: boolean;
+  board: BoardApiPayload;
+  error?: string | null;
+};
+
+export type AIChatResponse = {
+  success: boolean;
+  status: string;
+  provider: string;
+  model: string;
+  assistantMessage: string;
+  boardUpdated: boolean;
+  board: BoardData;
+  error?: string;
+};
+
 const normalizeBoard = (payload: BoardApiPayload): BoardData => ({
   columns: payload.columns.map((column) => ({
     id: column.id,
@@ -59,4 +88,37 @@ export const saveBoard = async (
   board: BoardData,
 ): Promise<BoardData> => {
   return request(username, 'PUT', board);
+};
+
+export const sendAiChat = async (
+  username: string,
+  question: string,
+  history: ChatMessage[],
+): Promise<AIChatResponse> => {
+  const response = await fetch(`/api/ai/chat/${encodeURIComponent(username)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ question, history }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(
+      detail || `AI chat API POST failed with ${response.status}`,
+    );
+  }
+
+  const payload = (await response.json()) as AIChatApiPayload;
+  return {
+    success: payload.success,
+    status: payload.status,
+    provider: payload.provider,
+    model: payload.model,
+    assistantMessage: payload.assistantMessage,
+    boardUpdated: payload.boardUpdated,
+    board: normalizeBoard(payload.board),
+    error: payload.error ?? undefined,
+  };
 };

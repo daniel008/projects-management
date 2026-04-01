@@ -11,12 +11,20 @@ class StubClient:
     def __init__(self, response_text: str, configured: bool = True) -> None:
         self._response_text = response_text
         self._configured = configured
-        self.config = type("Config", (), {"model": "openai/gpt-oss-120b"})()
+        self.config = type(
+            "Config",
+            (),
+            {"model": "openai/gpt-oss-120b", "max_tokens": 256},
+        )()
 
     def is_configured(self) -> bool:
         return self._configured
 
-    def request_messages(self, messages: list[dict[str, str]]) -> str:
+    def request_messages(
+        self,
+        messages: list[dict[str, str]],
+        max_tokens: int | None = None,
+    ) -> str:
         return self._response_text
 
 

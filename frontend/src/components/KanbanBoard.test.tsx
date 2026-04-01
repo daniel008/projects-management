@@ -24,7 +24,32 @@ describe('KanbanBoard', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (_input: RequestInfo | URL, init?: RequestInit) => {
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+
+        if (url.includes('/api/ai/chat/')) {
+          const board = cloneInitialBoard();
+          return createJsonResponse({
+            success: true,
+            status: 'success',
+            provider: 'openrouter',
+            model: 'openai/gpt-oss-120b',
+            assistantMessage: 'Updated card-1 title for clarity.',
+            boardUpdated: true,
+            board: {
+              ...board,
+              cards: {
+                ...board.cards,
+                'card-1': {
+                  ...board.cards['card-1'],
+                  title: 'AI Updated Title',
+                },
+              },
+            },
+            error: null,
+          });
+        }
+
         if (init?.method === 'PUT' && typeof init.body === 'string') {
           return createJsonResponse(JSON.parse(init.body));
         }
@@ -96,5 +121,27 @@ describe('KanbanBoard', () => {
     expect(
       screen.getByRole('button', { name: /retry sync/i }),
     ).toBeInTheDocument();
+  });
+
+  it('sends AI chat request and refreshes board with returned update', async () => {
+    render(<KanbanBoard username="user" />);
+    await screen.findByText(/synced/i);
+
+    await userEvent.type(
+      screen.getByLabelText(/ask ai/i),
+      'Rename card-1 to AI Updated Title',
+    );
+    await userEvent.click(screen.getByRole('button', { name: /send to ai/i }));
+
+    expect(
+      await screen.findByText(/updated card-1 title for clarity/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText('AI Updated Title')).toBeInTheDocument();
+    expect(screen.getByText(/board updated by ai/i)).toBeInTheDocument();
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/ai/chat/user',
+      expect.objectContaining({ method: 'POST' }),
+    );
   });
 });

@@ -70,3 +70,38 @@ def test_parse_structured_response_handles_invalid_json_with_fallback_message() 
 
     assert message == "I could not produce valid JSON"
     assert board is None
+
+
+def test_parse_structured_response_accepts_markdown_fenced_json() -> None:
+    service = make_service()
+
+    message, board = service._parse_structured_response(
+        """```json
+{"userMessage":"Moved card","board":{"columns":[],"cards":{}}}
+```"""
+    )
+
+    assert message == "Moved card"
+    assert board == {"columns": [], "cards": {}}
+
+
+def test_parse_structured_response_recovers_message_from_truncated_json() -> None:
+    service = make_service()
+
+    message, board = service._parse_structured_response(
+        '{"userMessage":"Renamed card-1","board":{"columns":[{"id":"col-backlog"'
+    )
+
+    assert message == "Renamed card-1"
+    assert board is None
+
+
+def test_parse_structured_response_recovers_message_from_pretty_truncated_json() -> None:
+    service = make_service()
+
+    message, board = service._parse_structured_response(
+        '{\n  "userMessage": "Moved card-1 to Review",\n  "board": {\n    "columns": ['
+    )
+
+    assert message == "Moved card-1 to Review"
+    assert board is None

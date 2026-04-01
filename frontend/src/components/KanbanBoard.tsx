@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -14,11 +14,22 @@ import {
 } from '@dnd-kit/core';
 import { KanbanColumn } from '@/components/KanbanColumn';
 import { KanbanCardPreview } from '@/components/KanbanCardPreview';
-import { fetchBoard, saveBoard } from '@/lib/boardApi';
+import {
+  fetchBoard,
+  saveBoard,
+  sendAiChat,
+  type ChatMessage,
+} from '@/lib/boardApi';
 import { createId, initialData, moveCard, type BoardData } from '@/lib/kanban';
 
 type KanbanBoardProps = {
   username: string;
+};
+
+type ChatEntry = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
 };
 
 export const KanbanBoard = ({ username }: KanbanBoardProps) => {
@@ -27,6 +38,11 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState<ChatEntry[]>([]);
+  const [isChatting, setIsChatting] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [lastChatStatus, setLastChatStatus] = useState('Idle');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -86,6 +102,58 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
       void persistBoard(next);
       return next;
     });
+  };
+
+  const handleChatSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const question = chatInput.trim();
+    if (!question || !board) {
+      return;
+    }
+
+    const userEntry: ChatEntry = {
+      id: createId('chat-user'),
+      role: 'user',
+      content: question,
+    };
+
+    const nextHistory = [...chatHistory, userEntry];
+    const historyPayload: ChatMessage[] = nextHistory.map((entry) => ({
+      role: entry.role,
+      content: entry.content,
+    }));
+
+    setChatHistory(nextHistory);
+    setChatInput('');
+    setIsChatting(true);
+    setChatError(null);
+    setLastChatStatus('Sending request...');
+
+    try {
+      const response = await sendAiChat(username, question, historyPayload);
+      const assistantEntry: ChatEntry = {
+        id: createId('chat-assistant'),
+        role: 'assistant',
+        content: response.assistantMessage,
+      };
+
+      setChatHistory((prev) => [...prev, assistantEntry]);
+      setBoard(response.board);
+      setSyncError(null);
+      setLastChatStatus(
+        response.boardUpdated ? 'Board updated by AI' : 'Response received',
+      );
+
+      if (response.error) {
+        setChatError(response.error);
+      }
+    } catch {
+      setChatError('Unable to send AI request right now. Please try again.');
+      setLastChatStatus('Request failed');
+    } finally {
+      setIsChatting(false);
+    }
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -275,33 +343,116 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
           </div>
         </header>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragCancel={handleDragCancel}
-          onDragEnd={handleDragEnd}
-        >
-          <section className="grid gap-6 lg:grid-cols-5">
-            {board.columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                cards={column.cardIds.map((cardId) => board.cards[cardId])}
-                onRename={handleRenameColumn}
-                onAddCard={handleAddCard}
-                onDeleteCard={handleDeleteCard}
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragCancel={handleDragCancel}
+            onDragEnd={handleDragEnd}
+          >
+            <div>
+              <section className="grid gap-6 lg:grid-cols-5">
+                {board.columns.map((column) => (
+                  <KanbanColumn
+                    key={column.id}
+                    column={column}
+                    cards={column.cardIds.map((cardId) => board.cards[cardId])}
+                    onRename={handleRenameColumn}
+                    onAddCard={handleAddCard}
+                    onDeleteCard={handleDeleteCard}
+                  />
+                ))}
+              </section>
+            </div>
+            <DragOverlay>
+              {activeCard ? (
+                <div className="w-[260px]">
+                  <KanbanCardPreview card={activeCard} />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+
+          <aside className="rounded-3xl border border-[var(--stroke)] bg-white/90 p-5 shadow-[var(--shadow)] backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--gray-text)]">
+              AI Sidebar
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold text-[var(--navy-dark)]">
+              Board Assistant
+            </h2>
+            <p className="mt-2 text-sm text-[var(--gray-text)]">
+              Ask for card edits, moves, or planning help. The board refreshes
+              here after each response.
+            </p>
+
+            <div className="mt-4 rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--gray-text)]">
+              {isChatting
+                ? 'Requesting AI response...'
+                : `Status: ${lastChatStatus}`}
+            </div>
+
+            <div
+              className="mt-4 flex h-[320px] flex-col gap-3 overflow-y-auto rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] p-3"
+              aria-live="polite"
+            >
+              {chatHistory.length === 0 ? (
+                <p className="text-sm text-[var(--gray-text)]">
+                  No messages yet. Try: "Move card-1 to Review and rename it."
+                </p>
+              ) : (
+                chatHistory.map((entry) => (
+                  <article
+                    key={entry.id}
+                    className={`rounded-2xl px-3 py-2 text-sm leading-6 ${
+                      entry.role === 'assistant'
+                        ? 'border border-[var(--stroke)] bg-white text-[var(--navy-dark)]'
+                        : 'bg-[var(--primary-blue)] text-white'
+                    }`}
+                    data-testid={`chat-message-${entry.role}`}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] opacity-80">
+                      {entry.role}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap">{entry.content}</p>
+                  </article>
+                ))
+              )}
+            </div>
+
+            <form className="mt-4 space-y-3" onSubmit={handleChatSubmit}>
+              <label
+                htmlFor="ai-chat-input"
+                className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--gray-text)]"
+              >
+                Ask AI
+              </label>
+              <textarea
+                id="ai-chat-input"
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                rows={4}
+                placeholder="Describe what to change on the board..."
+                className="w-full resize-y rounded-2xl border border-[var(--stroke)] bg-white px-3 py-2 text-sm text-[var(--navy-dark)] outline-none transition focus:border-[var(--primary-blue)]"
               />
-            ))}
-          </section>
-          <DragOverlay>
-            {activeCard ? (
-              <div className="w-[260px]">
-                <KanbanCardPreview card={activeCard} />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+              {chatError ? (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-rose-400/60 bg-rose-50 px-3 py-2 text-sm text-[var(--navy-dark)]"
+                >
+                  {chatError}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={isChatting || !chatInput.trim()}
+                className="w-full rounded-full bg-[var(--secondary-purple)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isChatting ? 'Sending...' : 'Send to AI'}
+              </button>
+            </form>
+          </aside>
+        </section>
       </main>
     </div>
   );

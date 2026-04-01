@@ -213,18 +213,18 @@
 
 ### Scope
 
-- [ ] Add sidebar chat UI integrated with backend AI endpoint.
-- [ ] Render conversation history and request status.
-- [ ] Reflect AI-driven board updates in UI immediately after successful response.
+- [x] Add sidebar chat UI integrated with backend AI endpoint.
+- [x] Render conversation history and request status.
+- [x] Reflect AI-driven board updates in UI immediately after successful response.
 
 ### Tests
 
-- [ ] Unit tests for chat UI state management and message rendering (target around 80% when sensible).
-- [ ] Integration tests for chat request lifecycle and board refresh trigger.
-- [ ] E2E tests for end-to-end chat interaction that results in board mutation.
+- [x] Unit tests for chat UI state management and message rendering (target around 80% when sensible).
+- [x] Integration tests for chat request lifecycle and board refresh trigger.
+- [x] E2E tests for end-to-end chat interaction that results in board mutation.
 
 ### Success Criteria
 
-- [ ] Chat sidebar is usable and stable in desktop and mobile layouts.
-- [ ] Board visibly refreshes when AI returns update instructions.
-- [ ] Critical user journeys pass E2E checks.
+- [x] Chat sidebar is usable and stable in desktop and mobile layouts.
+- [x] Board visibly refreshes when AI returns update instructions.
+- [x] Critical user journeys pass E2E checks.

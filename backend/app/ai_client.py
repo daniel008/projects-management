@@ -57,7 +57,11 @@ class OpenRouterClient:
     def request_text(self, prompt: str) -> str:
         return self.request_messages([{"role": "user", "content": prompt}])
 
-    def request_messages(self, messages: list[dict[str, str]]) -> str:
+    def request_messages(
+        self,
+        messages: list[dict[str, str]],
+        max_tokens: int | None = None,
+    ) -> str:
         if not self.is_configured():
             raise ValueError("OPENROUTER_API_KEY is not configured.")
 
@@ -65,7 +69,7 @@ class OpenRouterClient:
             "model": self.config.model,
             "messages": messages,
             "temperature": self.config.temperature,
-            "max_tokens": self.config.max_tokens,
+            "max_tokens": max_tokens if max_tokens is not None else self.config.max_tokens,
         }
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",

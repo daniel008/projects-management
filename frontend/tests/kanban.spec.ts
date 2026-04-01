@@ -150,3 +150,68 @@ test('persists board updates across refresh', async ({ page }) => {
       .getByLabel('Column title'),
   ).toHaveValue('Renamed Backlog');
 });
+
+test('applies AI sidebar response and updates board view', async ({ page }) => {
+  let boardState = createInitialBoard();
+
+  await page.route('**/api/board/user', async (route) => {
+    const request = route.request();
+    if (request.method() === 'PUT') {
+      const payload = request.postDataJSON() as BoardPayload;
+      boardState = payload;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(boardState),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(boardState),
+    });
+  });
+
+  await page.route('**/api/ai/chat/user', async (route) => {
+    boardState = {
+      ...boardState,
+      cards: {
+        ...boardState.cards,
+        'card-1': {
+          ...boardState.cards['card-1'],
+          title: 'AI Updated Title',
+        },
+      },
+    };
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        status: 'success',
+        provider: 'openrouter',
+        model: 'openai/gpt-oss-120b',
+        assistantMessage: 'Updated card-1 title.',
+        boardUpdated: true,
+        board: boardState,
+        error: null,
+      }),
+    });
+  });
+
+  await login(page);
+
+  await page
+    .getByLabel('Ask AI')
+    .fill('Rename card-1 title to AI Updated Title.');
+  await page.getByRole('button', { name: /send to ai/i }).click();
+
+  await expect(page.getByText('Updated card-1 title.')).toBeVisible();
+  await expect(page.getByTestId('card-card-1')).toContainText(
+    'AI Updated Title',
+  );
+  await expect(page.getByText(/board updated by ai/i)).toBeVisible();
+});
