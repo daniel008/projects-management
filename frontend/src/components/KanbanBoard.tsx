@@ -20,7 +20,7 @@ import {
   sendAiChat,
   type ChatMessage,
 } from '@/lib/boardApi';
-import { createId, initialData, moveCard, type BoardData } from '@/lib/kanban';
+import { createId, moveCard, type BoardData } from '@/lib/kanban';
 
 type KanbanBoardProps = {
   username: string;
@@ -71,7 +71,7 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
       setSyncError(
         'Unable to load board from backend. Using local board state.',
       );
-      setBoard((prev) => prev ?? initialData);
+      setBoard((prev) => prev ?? { columns: [], cards: {} });
     } finally {
       await ensureMinLoadingDelay(startedAt);
       setIsLoading(false);
@@ -94,6 +94,11 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
   };
 
   const updateBoard = (updater: (prev: BoardData) => BoardData) => {
+    // Block local edits while an AI chat request is in flight to prevent
+    // the AI board response from silently overwriting in-flight local changes.
+    if (isChatting) {
+      return;
+    }
     setBoard((prev) => {
       if (!prev) {
         return prev;
@@ -179,6 +184,9 @@ export const KanbanBoard = ({ username }: KanbanBoardProps) => {
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
+    if (!title.trim()) {
+      return;
+    }
     updateBoard((prev) => ({
       ...prev,
       columns: prev.columns.map((column) =>

@@ -59,6 +59,17 @@ describe('KanbanApp', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('treats a non-"true" session key value as unauthenticated', async () => {
+    sessionStorage.setItem('pm-authenticated', 'yes');
+    render(<KanbanApp />);
+    expect(
+      await screen.findByRole('button', { name: /sign in/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /log out/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('logs in with demo credentials and allows logout', async () => {
     render(<KanbanApp />);
 

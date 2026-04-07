@@ -127,6 +127,7 @@ class AIService:
                         username, board_payload)
                     board_updated = True
                 except Exception as exc:
+                    logger.exception("AI board update ignored")
                     error = f"AI board update ignored: {exc}"
 
             response_message = assistant_message or FALLBACK_MESSAGE

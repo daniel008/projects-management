@@ -90,6 +90,37 @@ def test_openrouter_client_retries_on_timeout_then_succeeds() -> None:
     assert sleep_calls == [0.05]
 
 
+def test_openrouter_client_raises_after_all_retries_exhausted() -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        raise httpx.ReadTimeout("read timeout", request=request)
+
+    config = AIConfig(
+        api_key="test-key",
+        model="openai/gpt-oss-120b",
+        base_url="https://example.test/api/v1",
+        timeout_seconds=8.0,
+        max_retries=2,
+        retry_backoff_seconds=0.01,
+        temperature=0.0,
+        max_tokens=64,
+    )
+    client = OpenRouterClient(
+        config,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        sleep_fn=lambda seconds: None,
+    )
+
+    import pytest
+    with pytest.raises(RuntimeError, match="failed after configured retries"):
+        client.request_text("Will always time out")
+
+    assert calls == 3  # 1 initial + 2 retries
+
+
 def test_ai_service_returns_skipped_status_when_api_key_missing() -> None:
     config = AIConfig(
         api_key=None,

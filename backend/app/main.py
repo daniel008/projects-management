@@ -44,6 +44,11 @@ def create_app(
     def hello_api() -> dict[str, str]:
         return {"message": "hello world", "service": "backend"}
 
+    # MVP NOTE: Authentication is frontend-only (hardcoded credentials).
+    # The backend accepts any username in the URL with no session validation.
+    # This is intentional for the local-only single-user MVP — no user isolation
+    # is enforced server-side. Adding server-side auth would require session
+    # tokens validated here before delegating to the service layer.
     @app.get("/api/board/{username}")
     def get_board(username: str) -> dict:
         return service.get_board(username)

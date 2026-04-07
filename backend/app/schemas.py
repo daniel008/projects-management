@@ -2,14 +2,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CardPayload(BaseModel):
-    id: str
-    title: str
-    details: str
+    id: str = Field(..., min_length=1, max_length=100)
+    title: str = Field(..., min_length=1, max_length=255)
+    details: str = Field(..., max_length=5000)
 
 
 class ColumnPayload(BaseModel):
-    id: str
-    title: str
+    id: str = Field(..., min_length=1, max_length=100)
+    title: str = Field(..., min_length=1, max_length=100)
     card_ids: list[str] = Field(alias="cardIds")
 
 
@@ -36,7 +36,7 @@ class ChatMessage(BaseModel):
 
 
 class AIChatRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1, max_length=2000)
     history: list[ChatMessage] = Field(default_factory=list)
 
 

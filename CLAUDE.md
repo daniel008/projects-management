@@ -87,3 +87,8 @@ Parsing is permissive — the service strips markdown fences, extracts the first
 - Target ~80% unit test coverage where sensible; integration tests for cross-boundary paths.
 - Optimistic UI updates with explicit sync status/error feedback.
 - Color palette: Accent Yellow `#ecad0a`, Blue Primary `#209dd7`, Purple Secondary `#753991`, Dark Navy `#032147`, Gray Text `#888888`.
+
+
+## DETAILED PLAN
+
+@doc/PLAN.md

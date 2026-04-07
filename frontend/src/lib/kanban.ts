@@ -15,6 +15,7 @@ export type BoardData = {
   cards: Record<string, Card>;
 };
 
+// initialData is used as a test fixture only. It is not used as a runtime fallback.
 export const initialData: BoardData = {
   columns: [
     { id: "col-backlog", title: "Backlog", cardIds: ["card-1", "card-2"] },

@@ -71,6 +71,43 @@ def test_ai_chat_applies_valid_board_update_and_persists(tmp_path: Path) -> None
     assert verify.json()["cards"]["card-1"]["title"] == "Updated by AI"
 
 
+def test_ai_chat_ignores_board_with_invalid_structure_and_still_returns_message(tmp_path: Path) -> None:
+    # AI returns a structurally plausible board that fails BoardPayload validation:
+    # a card is referenced in a column but missing from the cards map.
+    invalid_board = {
+        "columns": [{"id": "col-a", "title": "Todo", "cardIds": ["ghost-card"]}],
+        "cards": {},
+    }
+    ai_response = json.dumps({
+        "userMessage": "I tried to update the board.",
+        "board": invalid_board,
+    })
+    client = make_client(tmp_path, ai_response)
+
+    response = client.post(
+        "/api/ai/chat/alice",
+        json={"question": "Update the board", "history": []},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["assistantMessage"] == "I tried to update the board."
+    assert body["boardUpdated"] is False
+    assert body["error"] is not None
+    assert "ignored" in body["error"].lower()
+
+
+def test_ai_chat_rejects_empty_question(tmp_path: Path) -> None:
+    client = make_client(tmp_path, '{}')
+
+    response = client.post(
+        "/api/ai/chat/alice",
+        json={"question": "", "history": []},
+    )
+
+    assert response.status_code == 422
+
+
 def test_ai_chat_returns_message_when_output_is_not_structured(tmp_path: Path) -> None:
     client = make_client(tmp_path, "I suggest moving card-1 to review.")
 

@@ -12,6 +12,27 @@ const login = async (page: Page) => {
   await page.getByRole('button', { name: /sign in/i }).click();
 };
 
+const setupBoardMock = async (page: Page) => {
+  let boardState = createInitialBoard();
+  await page.route('**/api/board/user', async (route) => {
+    const request = route.request();
+    if (request.method() === 'PUT') {
+      boardState = request.postDataJSON() as BoardPayload;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(boardState),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(boardState),
+    });
+  });
+};
+
 const createInitialBoard = (): BoardPayload => ({
   columns: [
     { id: 'col-backlog', title: 'Backlog', cardIds: ['card-1', 'card-2'] },
@@ -65,6 +86,7 @@ const createInitialBoard = (): BoardPayload => ({
 });
 
 test('logs in and loads the kanban board', async ({ page }) => {
+  await setupBoardMock(page);
   await login(page);
   await expect(
     page.getByRole('heading', { name: 'Kanban Studio' }),
@@ -73,6 +95,7 @@ test('logs in and loads the kanban board', async ({ page }) => {
 });
 
 test('adds a card to a column', async ({ page }) => {
+  await setupBoardMock(page);
   await login(page);
   const firstColumn = page.locator('[data-testid^="column-"]').first();
   await firstColumn.getByRole('button', { name: /add a card/i }).click();
@@ -83,6 +106,7 @@ test('adds a card to a column', async ({ page }) => {
 });
 
 test('moves a card between columns', async ({ page }) => {
+  await setupBoardMock(page);
   await login(page);
   const card = page.getByTestId('card-card-1');
   const targetColumn = page.getByTestId('column-col-review');
@@ -105,6 +129,7 @@ test('moves a card between columns', async ({ page }) => {
 });
 
 test('logs out and returns to sign in', async ({ page }) => {
+  await setupBoardMock(page);
   await login(page);
   await page.getByRole('button', { name: /log out/i }).click();
   await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();

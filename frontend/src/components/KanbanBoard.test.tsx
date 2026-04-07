@@ -73,10 +73,9 @@ describe('KanbanBoard', () => {
     const fetchMock = vi.mocked(globalThis.fetch);
     const column = getFirstColumn();
     const input = within(column).getByLabelText('Column title');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'New Name');
+    await userEvent.type(input, ' Updated');
 
-    expect(input).toHaveValue('New Name');
+    expect(input).toHaveValue('Backlog Updated');
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/board/user',
       expect.objectContaining({ method: 'PUT' }),
@@ -121,6 +120,35 @@ describe('KanbanBoard', () => {
     expect(
       screen.getByRole('button', { name: /retry sync/i }),
     ).toBeInTheDocument();
+  });
+
+  it('shows sync error when save fails after adding a card', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === 'PUT') {
+          throw new Error('Network down');
+        }
+        return createJsonResponse(cloneInitialBoard());
+      },
+    );
+
+    render(<KanbanBoard username="user" />);
+    await screen.findByText(/synced/i);
+
+    const column = getFirstColumn();
+    await userEvent.click(
+      within(column).getByRole('button', { name: /add a card/i }),
+    );
+    await userEvent.type(
+      within(column).getByPlaceholderText(/card title/i),
+      'Doomed card',
+    );
+    await userEvent.click(
+      within(column).getByRole('button', { name: /add card/i }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/unable to save board changes/i);
   });
 
   it('sends AI chat request and refreshes board with returned update', async () => {
